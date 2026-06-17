@@ -79,13 +79,13 @@ class ADMM100(nn.Module):
 
         return torch.fft.fft2(psf_in_left_corner)
     
-    def make_psiT_psi_fft(self, x):
-        example = torch.zeros_like(x)
+    def make_psiT_psi_fft(self, h, w, device, dtype):
+        example = torch.zeros(1, 1, h, w, device = device, dtype = dtype)
         example[..., 0, 0] = 1
 
         changes = self.image_gradient_transpose(self.image_gradient(example))
 
-        return torch.fft.fft2(changes).real
+        return torch.fft.fft2(changes)
     
     def fft_multiplication(self, x, psf_fft):
         return torch.fft.ifft2(torch.fft.fft2(x) * psf_fft).real
@@ -156,8 +156,9 @@ class ADMM100(nn.Module):
         psf_fft = self.make_psf_fft(psf_enlarged)
         CT_C = self.make_CT_C(x, *increase_information)
 
-        psiT_psi_fft = self.make_psiT_psi_fft(x)
-        denominator_fft_update_x = self.mu * torch.abs(psf_fft) ** 2 + self.mu * psiT_psi_fft + self.mu
+        psiT_psi_fft = self.make_psiT_psi_fft(x.shape[-2], x.shape[-1], x.device, x.dtype)
+        
+        denominator_fft_update_x = self.mu * torch.abs(psf_fft) ** 2 + self.mu * torch.abs(psiT_psi_fft) + self.mu
 
         for _ in range(self.number_iterations):
             x, v, u, w, alpha_1, alpha_2, alpha_3 = self.admm_step(
