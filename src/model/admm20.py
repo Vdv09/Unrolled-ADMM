@@ -71,10 +71,7 @@ class ADMM20(nn.Module):
     
     def forward(self, lensless, psf, **batch):
         reconstruction = self.reconstruct(lensless, psf)
-
-        first_image = reconstruction[0].detach().permute(1, 2, 0).cpu().numpy()
-        reconstruction_roi = get_roi(first_image)
-        reconstruction_roi = torch.from_numpy(reconstruction_roi).to(lensless.device)
+        reconstruction_roi = admm_utils.crop_reconstruction_roi(reconstruction)
 
         return {
             "reconstruction": reconstruction,
