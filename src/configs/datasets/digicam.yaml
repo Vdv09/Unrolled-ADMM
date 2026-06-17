@@ -1,0 +1,9 @@
+train:
+  _target_: src.datasets.digicam_dataset.DigiCamDataset
+  dataset_split: train
+  masks_dir: data/digicam_masks
+
+val:
+  _target_: src.datasets.digicam_dataset.DigiCamDataset
+  dataset_split: test
+  masks_dir: data/digicam_masks

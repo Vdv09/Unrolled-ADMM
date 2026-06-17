@@ -1,0 +1,9 @@
+train:
+  - _target_: src.metrics.reconstruction_metrics.Psnr
+    name: train_psnr
+
+inference:
+  - _target_: src.metrics.reconstruction_metrics.Psnr
+    name: psnr
+  - _target_: src.metrics.reconstruction_metrics.Ssim
+    name: ssim

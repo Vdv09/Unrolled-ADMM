@@ -1,0 +1,45 @@
+defaults:
+  - model: admm20
+  - writer: cometml
+  - metrics: reconstruction
+  - datasets: digicam
+  - dataloader: digicam
+  - transforms: none_transforms
+  - _self_
+
+optimizer:
+  _target_: torch.optim.Adam
+  lr: 1.0e-3
+
+lr_scheduler:
+  _target_: torch.optim.lr_scheduler.StepLR
+  gamma: 0.5
+  step_size: 10
+
+loss_function:
+  _target_: src.loss.mse_roi.MseRoiLoss
+
+trainer:
+  log_step: 10
+  n_epochs: 50
+  epoch_len: 200
+  device_tensors: ["lensless", "psf", "lensed_roi"]
+  resume_from: null
+  device: mps
+  override: false
+  monitor: "max val_psnr"
+  save_period: 5
+  early_stop: 50
+  save_dir: saved
+  seed: 1
+
+dataloader:
+  batch_size: 1
+  num_workers: 0
+  pin_memory: true
+
+writer:
+  project_name: dl-unrolled-admm
+  run_name: admm20-first-try
+  mode: online
+  loss_names: ["loss"]

@@ -36,6 +36,9 @@ class DigiCamDataset(Dataset):
             self.get_mask(row["mask_label"])
         )
 
+        if psf.ndim == 4 and psf.shape[0] == 1:
+            psf = psf.squeeze(0)
+
         return {
             "lensless": lensless,
             "lensed_roi": torch.from_numpy(get_roi(lensed.numpy())),

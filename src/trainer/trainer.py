@@ -56,24 +56,11 @@ class Trainer(BaseTrainer):
         return batch
 
     def _log_batch(self, batch_idx, batch, mode="train"):
-        """
-        Log data from batch. Calls self.writer.add_* to log data
-        to the experiment tracker.
+        if mode != "val":
+            return
 
-        Args:
-            batch_idx (int): index of the current batch.
-            batch (dict): dict-based batch after going through
-                the 'process_batch' function.
-            mode (str): train or inference. Defines which logging
-                rules to apply.
-        """
-        # method to log data from you batch
-        # such as audio, text or images, for example
+        pred = batch["reconstruction_roi"][0].detach().clamp(0, 1).permute(1, 2, 0).cpu().numpy()
+        gt = batch["lensed_roi"][0].detach().clamp(0, 1).cpu().numpy()
 
-        # logging scheme might be different for different partitions
-        if mode == "train":  # the method is called only every self.log_step steps
-            # Log Stuff
-            pass
-        else:
-            # Log Stuff
-            pass
+        self.writer.add_image("reconstruction_roi", pred)
+        self.writer.add_image("lensed_roi", gt)

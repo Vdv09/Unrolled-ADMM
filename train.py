@@ -1,4 +1,5 @@
 import warnings
+import comet_ml
 
 import hydra
 import torch
