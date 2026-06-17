@@ -61,6 +61,8 @@ class Trainer(BaseTrainer):
 
         pred = batch["reconstruction_roi"][0].detach().clamp(0, 1).permute(1, 2, 0).cpu().numpy()
         gt = batch["lensed_roi"][0].detach().clamp(0, 1).cpu().numpy()
+        pred_normalized = pred / max(float(pred.max()), 1e-6)
 
         self.writer.add_image("reconstruction_roi", pred)
+        self.writer.add_image("reconstruction_roi_normalized", pred_normalized)
         self.writer.add_image("lensed_roi", gt)
