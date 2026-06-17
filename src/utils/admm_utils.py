@@ -1,4 +1,5 @@
 import torch
+from lensless_helpers.preprocessor import ALIGNMENT
 
 
 def swap_channels(x):  # [B, H, W, C] or [H, W, C] -> [B, C, H, W]
@@ -128,3 +129,11 @@ def admm_step(x, v, u, w, alpha_1, alpha_2, alpha_3, psf_fft, lensless_enlarged,
     alpha_3 = alpha_3 + mu * (x - w)
 
     return x, v, u, w, alpha_1, alpha_2, alpha_3
+
+
+def crop_reconstruction_roi(reconstruction):
+    top, left = ALIGNMENT["top_left"]
+    h = ALIGNMENT["height"]
+    w = ALIGNMENT["width"]
+
+    return center_crop(reconstruction, top, left, h, w)
