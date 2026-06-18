@@ -9,11 +9,11 @@ defaults:
 
 optimizer:
   _target_: torch.optim.Adam
-  lr: 1.0e-3
+  lr: 3.0e-4
 
 lr_scheduler:
   _target_: torch.optim.lr_scheduler.StepLR
-  gamma: 0.5
+  gamma: 0.8
   step_size: ${trainer.epoch_len}
 
 loss_function:
@@ -23,9 +23,10 @@ trainer:
   log_step: 10
   n_epochs: 50
   epoch_len: 200
+  max_grad_norm: 1.0
   device_tensors: ["lensless", "psf", "lensed_roi"]
   resume_from: null
-  device: mps
+  device: auto
   override: false
   monitor: "max val_psnr"
   save_period: 5
