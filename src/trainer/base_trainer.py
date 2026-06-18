@@ -281,10 +281,6 @@ class BaseTrainer:
             for metric_name, value in self.evaluation_metrics.result().items():
                 if hasattr(self.writer, "add_scalar_named"):
                     self.writer.add_scalar_named(f"{part}_{metric_name}", value)
-            if batch_idx > 0:
-                self._log_batch(
-                    batch_idx, batch, part
-                )
 
         return self.evaluation_metrics.result()
 
