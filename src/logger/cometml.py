@@ -154,7 +154,6 @@ class CometMLWriter:
         )
 
     def add_scalar_named(self, scalar_name, scalar):
-        """Log a scalar without appending train/val mode suffix."""
         self.exp.log_metrics({scalar_name: scalar}, step=int(self.step))
 
     def add_scalars(self, scalars):
@@ -186,7 +185,6 @@ class CometMLWriter:
         )
 
     def add_image_named(self, image_name, image):
-        """Log an image without appending train/val mode suffix."""
         self.exp.log_image(image_data=image, name=image_name, step=int(self.step))
 
     def add_audio(self, audio_name, audio, sample_rate=None):
