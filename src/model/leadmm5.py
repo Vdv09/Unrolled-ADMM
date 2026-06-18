@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 from src.utils import admm_utils
 
@@ -55,8 +56,8 @@ class LeADMM5(nn.Module):
         psiT_psi_fft = admm_utils.make_psiT_psi_fft(x.shape[-2], x.shape[-1], x.device, x.dtype)
 
         for i in range(self.number_iterations):
-            current_mu = self.mu[i]
-            current_tau = self.tau[i]
+            current_mu = F.softplus(self.mu[i]) + 1e-6
+            current_tau = F.softplus(self.tau[i]) + 1e-6
 
             denominator_fft_update_x = current_mu * torch.abs(psf_fft) ** 2 + current_mu * torch.abs(psiT_psi_fft) + current_mu
 

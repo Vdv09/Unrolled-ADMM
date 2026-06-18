@@ -1,0 +1,6 @@
+_target_: src.model.modular_leadmm5.ModularLeADMM5
+variant: pre_post
+number_iterations: 5
+mu_start: 1.0e-4
+tau_start: 2.0e-4
+coefficient_to_increase_dimension: 2
