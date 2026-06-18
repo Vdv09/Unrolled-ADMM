@@ -8,7 +8,7 @@ from src.utils.admm_utils import swap_channels, crop_reconstruction_roi
 
 inner_channels_by_size = [
     (32, 64, 116, 128),
-    (64, 128, 232, 256)
+    (32, 64, 128, 256),
 ]
 
 class ModularLeADMM5(nn.Module):

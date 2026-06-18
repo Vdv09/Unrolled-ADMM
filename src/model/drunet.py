@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 
 class ResBlock(nn.Module):
@@ -20,7 +21,7 @@ class ResBlock(nn.Module):
         )
 
         self.relu = nn.ReLU(inplace=True)
-    
+
     def forward(self, x):
         residual = x
 
@@ -36,26 +37,34 @@ class DRUNet(nn.Module):
         in_channels, 
         out_channels, 
         inner_channels,  # expect 4 channels numbers
-        resnet_blocks_number = 5,
+        resnet_blocks_number = 4,
     ):
         super().__init__()
-
-        self.resnet_blocks_number = resnet_blocks_number
 
         self.first_conv = nn.Conv2d(
             in_channels = in_channels,
             out_channels = inner_channels[0],
             kernel_size = 3,
-            padding = 1
+            padding=1
         )
+
+        self.resnet_blocks_number = resnet_blocks_number
 
         self.down1 = self.down_step(inner_channels[0], inner_channels[1])
         self.down2 = self.down_step(inner_channels[1], inner_channels[2])
         self.down3 = self.down_step(inner_channels[2], inner_channels[3])
 
-        self.up3 = self.up_step(inner_channels[3] + inner_channels[2], inner_channels[2])
-        self.up2 = self.up_step(inner_channels[2] + inner_channels[1], inner_channels[1])
-        self.up1 = self.up_step(inner_channels[1] + inner_channels[0], inner_channels[0])
+        self.up3_upsample = nn.ConvTranspose2d(inner_channels[3], inner_channels[2], 2, stride=2)
+        self.up3_concatenate = nn.Conv2d(inner_channels[2] * 2, inner_channels[2], 1)
+        self.up3_resnet = nn.Sequential(*[ResBlock(inner_channels[2]) for _ in range(self.resnet_blocks_number)])
+
+        self.up2_upsample = nn.ConvTranspose2d(inner_channels[2], inner_channels[1], 2, stride=2)
+        self.up2_concatenate = nn.Conv2d(inner_channels[1] * 2, inner_channels[1], 1)
+        self.up2_resnet = nn.Sequential(*[ResBlock(inner_channels[1]) for _ in range(self.resnet_blocks_number)])
+
+        self.up1_upsample = nn.ConvTranspose2d(inner_channels[1], inner_channels[0], 2, stride=2)
+        self.up1_concatenate = nn.Conv2d(inner_channels[0] * 2, inner_channels[0], 1)
+        self.up1_resnet = nn.Sequential(*[ResBlock(inner_channels[0]) for _ in range(self.resnet_blocks_number)])
 
         self.last_conv = nn.Conv2d(
             in_channels = inner_channels[0], 
@@ -64,7 +73,6 @@ class DRUNet(nn.Module):
             padding=1
         )
 
-    
     def down_step(self, in_channels, out_channels):
         return nn.Sequential(
             nn.Conv2d(
@@ -74,31 +82,25 @@ class DRUNet(nn.Module):
                 stride = 2,
                 padding = 1
             ),
-            *[ResBlock(out_channels) for _ in range(self.resnet_blocks_number)]
+            *[ResBlock(out_channels) for _ in range(self.resnet_blocks_number)],
         )
-    
-    def up_step(self, in_channels, out_channels):
-        return nn.Sequential(
-            nn.ConvTranspose2d(
-                in_channels = in_channels,
-                out_channels = out_channels,
-                kernel_size = 2,
-                stride = 2
-            ),
-            *[ResBlock(out_channels) for _ in range(self.resnet_blocks_number)]
-        )
-    
-    def forward(self, x):
-        source_x = x
 
+    def up_step(self, deep, skip, upsample, concatenate, resnet):
+        y = upsample(deep)
+
+        if y.shape[-2:] != skip.shape[-2:]:
+            y = F.interpolate(y, size=skip.shape[-2:], mode="bilinear", align_corners=False)
+
+        return resnet(concatenate(torch.cat([y, skip], dim=1)))
+
+    def forward(self, x):
         x0 = self.first_conv(x)
-        
         x1 = self.down1(x0)
         x2 = self.down2(x1)
         x3 = self.down3(x2)
 
-        y = self.up3(torch.cat([x3, x2], dim=1))
-        y = self.up2(torch.cat([y, x1], dim=1))
-        y = self.up1(torch.cat([y, x0], dim=1))
+        y = self.up_step(x3, x2, self.up3_upsample, self.up3_concatenate, self.up3_resnet)
+        y = self.up_step(y, x1, self.up2_upsample, self.up2_concatenate, self.up2_resnet)
+        y = self.up_step(y, x0, self.up1_upsample, self.up1_concatenate, self.up1_resnet)
 
-        return source_x + self.last_conv(y)
+        return x + self.last_conv(y)
