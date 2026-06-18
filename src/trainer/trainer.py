@@ -61,17 +61,21 @@ class Trainer(BaseTrainer):
         if mode != "val":
             return
 
-        pred = batch["reconstruction_roi"][0].detach().clamp(0, 1).permute(1, 2, 0).cpu().numpy()
+        pred = (
+            batch["reconstruction_roi"][0]
+            .detach()
+            .clamp(0, 1)
+            .permute(1, 2, 0)
+            .cpu()
+            .numpy()
+        )
         gt = batch["lensed_roi"][0].detach().clamp(0, 1).cpu().numpy()
         pred_normalized = np.clip(pred / max(float(pred.max()), 1e-6), 0, 1)
 
-        def _to_uint8(img):
-            return (np.clip(img, 0, 1) * 255).astype(np.uint8)
-
         images = {
-            "val_reconstruction_roi": _to_uint8(pred),
-            "val_reconstruction_roi_normalized": _to_uint8(pred_normalized),
-            "val_lensed_roi": _to_uint8(gt),
+            "val_reconstruction_roi": pred,
+            "val_reconstruction_roi_normalized": pred_normalized,
+            "val_lensed_roi": gt,
         }
 
         for name, img in images.items():
@@ -79,3 +83,7 @@ class Trainer(BaseTrainer):
                 self.writer.add_image_named(name, img)
             else:
                 self.writer.add_image(name.removeprefix("val_"), img)
+
+        self.logger.info(
+            f"Comet val images logged (batch {batch_idx}, step {getattr(self.writer, 'step', '?')})"
+        )

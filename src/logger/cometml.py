@@ -171,6 +171,26 @@ class CometMLWriter:
             step=int(self.step),
         )
 
+    def prepare_image_hwc_uint8(self, image):
+        if hasattr(image, "detach"):
+            image = image.detach().cpu().numpy()
+        image = np.asarray(image)
+
+        if image.ndim == 3 and image.shape[0] in (1, 3) and image.shape[0] < min(
+            image.shape[1], image.shape[2]
+        ):
+            image = np.transpose(image, (1, 2, 0))
+
+        if image.ndim == 2:
+            image = np.stack([image, image, image], axis=-1)
+        elif image.ndim == 3 and image.shape[-1] == 1:
+            image = np.repeat(image, 3, axis=-1)
+
+        if image.dtype != np.uint8:
+            image = (np.clip(image, 0, 1) * 255).astype(np.uint8)
+
+        return np.ascontiguousarray(image)
+
     def add_image(self, image_name, image):
         """
         Log an image to the experiment tracker.
@@ -180,12 +200,15 @@ class CometMLWriter:
             image (Path | Tensor | ndarray | list[tuple] | Image): image
                 in the CometML-friendly format.
         """
-        self.exp.log_image(
-            image_data=image, name=self._object_name(image_name), step=int(self.step)
-        )
+        image = self.prepare_image_hwc_uint8(image)
+        name = self._object_name(image_name)
+        self.exp.log_image(image_data=image, name=name, step=int(self.step))
+        print(f"COMET image logged: {name} @ step {int(self.step)}")
 
     def add_image_named(self, image_name, image):
+        image = self.prepare_image_hwc_uint8(image)
         self.exp.log_image(image_data=image, name=image_name, step=int(self.step))
+        print(f"COMET image logged: {image_name} @ step {int(self.step)}")
 
     def add_audio(self, audio_name, audio, sample_rate=None):
         """
