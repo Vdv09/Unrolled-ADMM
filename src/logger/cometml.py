@@ -96,14 +96,15 @@ class CometMLWriter:
             mode (str): current mode (partition name).
         """
         self.mode = mode
-        previous_step = self.step
-        self.step = step
-        if step == 0:
+        previous_step = int(self.step)
+        self.step = int(step)
+        if self.step == 0:
             self.timer = datetime.now()
         else:
             duration = datetime.now() - self.timer
-            self.add_scalar(
-                "steps_per_sec", (self.step - previous_step) / duration.total_seconds()
+            self.exp.log_metrics(
+                {"steps_per_sec": (self.step - previous_step) / duration.total_seconds()},
+                step=self.step,
             )
             self.timer = datetime.now()
 
@@ -149,8 +150,12 @@ class CometMLWriter:
             {
                 self._object_name(scalar_name): scalar,
             },
-            step=self.step,
+            step=int(self.step),
         )
+
+    def add_scalar_named(self, scalar_name, scalar):
+        """Log a scalar without appending train/val mode suffix."""
+        self.exp.log_metrics({scalar_name: scalar}, step=int(self.step))
 
     def add_scalars(self, scalars):
         """
@@ -164,7 +169,7 @@ class CometMLWriter:
                 self._object_name(scalar_name): scalar
                 for scalar_name, scalar in scalars.items()
             },
-            step=self.step,
+            step=int(self.step),
         )
 
     def add_image(self, image_name, image):
@@ -177,8 +182,12 @@ class CometMLWriter:
                 in the CometML-friendly format.
         """
         self.exp.log_image(
-            image_data=image, name=self._object_name(image_name), step=self.step
+            image_data=image, name=self._object_name(image_name), step=int(self.step)
         )
+
+    def add_image_named(self, image_name, image):
+        """Log an image without appending train/val mode suffix."""
+        self.exp.log_image(image_data=image, name=image_name, step=int(self.step))
 
     def add_audio(self, audio_name, audio, sample_rate=None):
         """

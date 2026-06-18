@@ -275,6 +275,9 @@ class BaseTrainer:
                 )
             self.writer.set_step(epoch * self.epoch_len, part)
             self._log_scalars(self.evaluation_metrics)
+            for metric_name, value in self.evaluation_metrics.result().items():
+                if hasattr(self.writer, "add_scalar_named"):
+                    self.writer.add_scalar_named(f"{part}_{metric_name}", value)
             self._log_batch(
                 batch_idx, batch, part
             )  # log only the last batch during inference

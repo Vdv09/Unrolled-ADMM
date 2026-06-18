@@ -14,7 +14,7 @@ optimizer:
 lr_scheduler:
   _target_: torch.optim.lr_scheduler.StepLR
   gamma: 0.5
-  step_size: ${trainer.epoch_len}  # decay once per epoch (scheduler steps each batch in trainer.py)
+  step_size: ${trainer.epoch_len}
 
 loss_function:
   _target_: src.loss.mse_roi.MseRoiLoss

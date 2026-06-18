@@ -1,6 +1,8 @@
 from src.metrics.tracker import MetricTracker
 from src.trainer.base_trainer import BaseTrainer
 
+import numpy as np
+
 
 class Trainer(BaseTrainer):
     """
@@ -61,8 +63,19 @@ class Trainer(BaseTrainer):
 
         pred = batch["reconstruction_roi"][0].detach().clamp(0, 1).permute(1, 2, 0).cpu().numpy()
         gt = batch["lensed_roi"][0].detach().clamp(0, 1).cpu().numpy()
-        pred_normalized = pred / max(float(pred.max()), 1e-6)
+        pred_normalized = np.clip(pred / max(float(pred.max()), 1e-6), 0, 1)
 
-        self.writer.add_image("reconstruction_roi", pred)
-        self.writer.add_image("reconstruction_roi_normalized", pred_normalized)
-        self.writer.add_image("lensed_roi", gt)
+        def _to_uint8(img):
+            return (np.clip(img, 0, 1) * 255).astype(np.uint8)
+
+        images = {
+            "val_reconstruction_roi": _to_uint8(pred),
+            "val_reconstruction_roi_normalized": _to_uint8(pred_normalized),
+            "val_lensed_roi": _to_uint8(gt),
+        }
+
+        for name, img in images.items():
+            if hasattr(self.writer, "add_image_named"):
+                self.writer.add_image_named(name, img)
+            else:
+                self.writer.add_image(name.removeprefix("val_"), img)
