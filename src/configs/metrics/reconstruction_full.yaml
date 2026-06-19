@@ -1,0 +1,7 @@
+inference:
+  - _target_: src.metrics.reconstruction_metrics.Psnr
+    name: psnr
+  - _target_: src.metrics.reconstruction_metrics.Ssim
+    name: ssim
+  - _target_: src.metrics.reconstruction_metrics.Mse
+    name: mse

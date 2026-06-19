@@ -4,6 +4,8 @@ from tqdm.auto import tqdm
 from src.metrics.tracker import MetricTracker
 from src.trainer.base_trainer import BaseTrainer
 
+from PIL import Image
+
 
 class Inferencer(BaseTrainer):
     """
@@ -126,29 +128,16 @@ class Inferencer(BaseTrainer):
             for met in self.metrics["inference"]:
                 metrics.update(met.name, met(**batch))
 
-        # Some saving logic. This is an example
-        # Use if you need to save predictions on disk
+        if self.save_path is not None:
+            image_ids = batch["image_id"]
+            reconstruction_roi = batch["reconstruction_roi"]
 
-        batch_size = batch["logits"].shape[0]
-        current_id = batch_idx * batch_size
+            for i, image_id in enumerate(image_ids):
+                img = reconstruction_roi[i].detach().float().clamp(0, 1).cpu().permute(1, 2, 0).numpy()
 
-        for i in range(batch_size):
-            # clone because of
-            # https://github.com/pytorch/pytorch/issues/1995
-            logits = batch["logits"][i].clone()
-            label = batch["labels"][i].clone()
-            pred_label = logits.argmax(dim=-1)
-
-            output_id = current_id + i
-
-            output = {
-                "pred_label": pred_label,
-                "label": label,
-            }
-
-            if self.save_path is not None:
-                # you can use safetensors or other lib here
-                torch.save(output, self.save_path / part / f"output_{output_id}.pth")
+                Image.fromarray((img * 255).astype("uint8")).save(
+                    self.save_path / part / f"{image_id}.png"
+                )
 
         return batch
 

@@ -1,0 +1,4 @@
+inference:
+  _target_: src.datasets.custom_dir_dataset.DigiCamEvalDataset
+  dataset_split: test
+  masks_dir: data/digicam_masks

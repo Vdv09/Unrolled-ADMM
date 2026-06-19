@@ -1,0 +1,3 @@
+inference:
+  _target_: src.datasets.custom_dir_dataset.CustomDirDataset
+  data_dir: data/custom_dir
