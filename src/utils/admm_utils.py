@@ -1,5 +1,7 @@
 import torch
 from lensless_helpers.preprocessor import ALIGNMENT
+import numpy as np
+from PIL import Image
 
 
 def swap_channels(x):  # [B, H, W, C] or [H, W, C] -> [B, C, H, W]
@@ -137,3 +139,7 @@ def crop_reconstruction_roi(reconstruction):
     w = ALIGNMENT["width"]
 
     return center_crop(reconstruction, top, left, h, w)
+
+
+def load_picture(path):
+    return np.array(Image.open(path).convert("RGB"))
