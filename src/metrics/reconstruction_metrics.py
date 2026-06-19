@@ -8,26 +8,30 @@ from src.metrics.base_metric import BaseMetric
 from src.utils import admm_utils
 
 
+def roi_pair(reconstruction_roi, lensed_roi):
+    return (reconstruction_roi.contiguous(), admm_utils.swap_channels(lensed_roi).contiguous())
+
+
 class Psnr(BaseMetric):
     def __call__(self, reconstruction_roi, lensed_roi, **batch):
-        lensed_roi = admm_utils.swap_channels(lensed_roi)
+        pred, target = roi_pair(reconstruction_roi, lensed_roi)
 
         return peak_signal_noise_ratio(
-            reconstruction_roi, lensed_roi, data_range=1.0
+            pred, target, data_range = 1.0
         ).item()
 
 
 class Ssim(BaseMetric):
     def __call__(self, reconstruction_roi, lensed_roi, **batch):
-        lensed_roi = admm_utils.swap_channels(lensed_roi)
+        pred, target = roi_pair(reconstruction_roi, lensed_roi)
 
         return structural_similarity_index_measure(
-            reconstruction_roi, lensed_roi, data_range=1.0
+            pred, target, data_range = 1.0
         ).item()
 
 
 class Mse(BaseMetric):
     def __call__(self, reconstruction_roi, lensed_roi, **batch):
-        lensed_roi = admm_utils.swap_channels(lensed_roi)
+        pred, target = roi_pair(reconstruction_roi, lensed_roi)
 
-        return mean_squared_error(reconstruction_roi, lensed_roi).item()
+        return mean_squared_error(pred, target).item()
