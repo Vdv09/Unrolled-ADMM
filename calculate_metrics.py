@@ -5,7 +5,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from PIL import Image
-from torchmetrics.image import (
+from torchmetrics.functional import (
     peak_signal_noise_ratio,
     structural_similarity_index_measure,
 )
