@@ -1,0 +1,5 @@
+_target_: src.model.admm.ADMM100
+number_iterations: 100
+mu: 1.0e-4
+tau: 2.0e-4
+coefficient_to_increase_dimension: 2
