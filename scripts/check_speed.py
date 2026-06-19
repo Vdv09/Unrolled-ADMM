@@ -1,11 +1,14 @@
 import argparse
+import sys
 import time
+from pathlib import Path
+
+ROOT_PATH = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT_PATH))
 
 import torch
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
-
-from src.utils.io_utils import ROOT_PATH
 
 
 def main():
@@ -36,7 +39,12 @@ def main():
     model = instantiate(config).to(device)
 
     if args.checkpoint:
-        checkpoint = torch.load(args.checkpoint, map_location=device, weights_only=False)
+        ckpt_path = Path(args.checkpoint)
+
+        if not ckpt_path.is_absolute():
+            ckpt_path = ROOT_PATH / ckpt_path
+
+        checkpoint = torch.load(ckpt_path, map_location=device, weights_only=False)
         model.load_state_dict(checkpoint.get("state_dict", checkpoint))
 
     model.eval()
