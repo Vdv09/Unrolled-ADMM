@@ -3,9 +3,9 @@ from pathlib import Path
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 from PIL import Image
-from torchmetrics.functional import (
-    mean_squared_error,
+from torchmetrics.image import (
     peak_signal_noise_ratio,
     structural_similarity_index_measure,
 )
@@ -16,7 +16,7 @@ from lensless_helpers.preprocessor import get_dataset_object, get_roi
 
 def load_rgb_chw(path):
     arr = np.array(Image.open(path).convert("RGB"), dtype=np.float32) / 255.0
-    return torch.from_numpy(arr).permute(2, 0, 1)
+    return torch.from_numpy(arr).permute(2, 0, 1).contiguous()
 
 
 def list_reconstructions(pred_dir):
@@ -31,7 +31,7 @@ def load_gt_roi_chw(dataset_dir, image_id):
     mask = np.load(root / "masks" / f"{image_id}.npy")
     lensed_tensor, _, _ = get_dataset_object(lensed, lensless, mask)
     roi = get_roi(lensed_tensor.numpy())
-    return torch.from_numpy(roi).permute(2, 0, 1)
+    return torch.from_numpy(roi).permute(2, 0, 1).contiguous()
 
 
 def compute_metrics(gt_dir, pred_dir, device, dataset_dir=None):
@@ -56,9 +56,12 @@ def compute_metrics(gt_dir, pred_dir, device, dataset_dir=None):
                 "Use --dataset-dir to compute GT ROI from lensless/masks/lensed."
             )
 
+        pred = pred.contiguous()
+        gt = gt.contiguous()
+
         psnr_vals.append(peak_signal_noise_ratio(pred, gt, data_range=1.0).item())
         ssim_vals.append(structural_similarity_index_measure(pred, gt, data_range=1.0).item())
-        mse_vals.append(mean_squared_error(pred, gt).item())
+        mse_vals.append(F.mse_loss(pred, gt).item())
         lpips_vals.append(lpips(pred, gt).item())
 
     return {
